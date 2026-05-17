@@ -1,61 +1,171 @@
-# Laboratory Work 2: ROS2 Integration with Gazebo
+# Robotics Introduction Labs
 
-## Overview
-This repository contains the solution for Lab 2. It demonstrates the integration of a custom 4-wheeled mobile robot (created in Lab 1) with ROS2. The package includes nodes for controlling the robot's movement via velocity commands and processing LiDAR sensor data for obstacle detection.
-
-## Prerequisites
-- Ubuntu (native or WSL2)
-- Docker installed and configured
+Hands-on labs for learning ROS2 and robotics simulation with Gazebo.
 
 ---
 
-## Quick Start Guide
+## Prerequisites
 
-### Step 1: Start the Environment
-Open your terminal in the root directory of this repository and start the Docker container:
+- **Ubuntu 24.04** (native, WSL2, dual boot, or VirtualBox)
+- **Git** and **GitHub account** - [GitHub Hello World Guide](https://docs.github.com/en/get-started/start-your-journey/hello-world)
+- **30 GB free disk space**
+- **8 GB RAM** (16 GB recommended)
 
+**Don't have Ubuntu 24.04?** See the [Installation Guide](docs/INSTALLATION_GUIDE.md) for setup instructions.
 
-# Start and enter the Docker container
+---
+### 1. Clone Repository
+
+```bash
+cd ~
+git clone https://github.com/RybOlya/robotics_lpnu.git
+cd robotics_lpnu
+```
+
+### 2. Build Docker Image
+
+```bash
+./scripts/cmd build-docker
+```
+
+This takes 10-15 minutes on first run.
+
+### 3. Run Container
+
+```bash
 ./scripts/cmd run
+```
+### 4. Install and open VScode
 
-(Keep this terminal open - this will be your main workspace)
-
-### Step 2: Build the Package
-Inside the container, compile the lab2 package and source the workspace:
-
-
-cd /opt/ws
-colcon build --packages-select lab2
-source install/setup.bash
+```bash
+code .
+```
 
 
-### Step 3: Launch Simulation and Bridge (Terminal 1)
-Launch Gazebo, RViz2, and the ros_gz_bridge simultaneously using the provided launch file:
+#### Open Additional Terminals
 
-
-ros2 launch lab2 gazebo_ros2.launch.py
-
-
-Important: Ensure the Gazebo simulation is playing. Press the play button in the bottom left corner of the Gazebo GUI if it starts paused.
-
-### Step 4: Run the Robot Controller (Terminal 2)
-Open a new terminal, enter the container, source the workspace, and start the publisher node to move the robot:
-
-
+```bash
+# In a new terminal window
 ./scripts/cmd bash
+```
+---
+
+## Labs
+
+| Lab | Topic | 
+|-----|-------|
+| **[Lab 1](lab1/README.md)** | Building a Robot in Gazebo | 2 sessions | Follow Gazebo tutorials to build a mobile robot with sensors |
+| **[Lab 2](lab2/README.md)** | ROS2 Integration | 2 sessions | Create ROS2 nodes, control the robot, visualize sensor data |
+
+### Development Workflow
+
+**The typical development cycle:**
+
+1. **Edit files** on your host machine (outside container) using your favorite IDE
+   - Files in `/home/YOUR_USER/robotics_lpnu/` are automatically visible inside container at `/opt/ws/src/code/`
+
+2. **Enter container** (if not already inside):
+   ```bash
+   ./scripts/cmd bash
+   ```
+
+3. **Build your code** inside container:
+   ```bash
+   colcon build
+   source install/setup.bash
+   ```
+
+4. **Run and test** inside container:
+   ```bash
+   gz sim worlds/robot.sdf        # For Lab 1
+   ros2 launch lab2 ...            # For Lab 2
+   ```
+
+5. **Repeat** steps 1-4 as needed
+
+**Important**: Changes to files are instant (no rebuild needed for world files, Python changes need rebuild).
+
+### Useful Workspace Commands
+
+```bash
+# Build only specific packages
+colcon build --packages-select lab1
+
+# Build with symbolic links (faster for Python)
+colcon build --symlink-install
+
+# In case of building at wrong level for example - clean workspace (remove build artifacts)
+rm -rf ./build ./install ./log
+```
+
+**Note:** After cleaning, you must rebuild with `colcon build` before running any ROS2 commands.
+
+---
+
+## Repository Structure
+
+```
+robotics_lpnu/
+├── lab1/                          # Lab 1: Building a Robot in Gazebo
+│   ├── worlds/robot.sdf          # Robot world file
+│   └── README.md                  # Lab 1 instructions
+├── lab2/                          # Lab 2: ROS2 Integration
+│   ├── lab2/                      # Python nodes (you create)
+│   ├── launch/                    # Launch files (you create)
+│   ├── config/robot.rviz         # RViz configuration
+│   └── README.md                  # Lab 2 instructions
+├── docs/                          
+│   └── INSTALLATION_GUIDE.md      # OS setup guide
+├── docker/                        
+│   ├── Dockerfile                 # ROS2 + Gazebo image
+│   └── entrypoint.bash           
+└── scripts/                       
+    └── cmd                        # Docker helper script
+```
+
+---
+
+## Troubleshooting
+
+### Docker permission denied
+```bash
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### GUI not working
+```bash
+# Linux: Allow X11 connections
+xhost +local:docker
+
+# WSL2: Update WSLg
+wsl --update
+```
+
+### Container won't start
+```bash
+# Remove inactive containers
+docker system prune -a
+./scripts/cmd build-docker
+```
+
+### ROS2 commands not found / Package issues
+```bash
+# Try re-sourcing the environment
+source /opt/ros/jazzy/setup.bash
 source /opt/ws/install/setup.bash
-ros2 run lab2 robot_controller
 
+# Or restart the container
+exit
+./scripts/cmd run
+```
 
-The robot will start moving forward in a sinusoidal path.
+---
 
-### Step 5: Run the LiDAR Subscriber (Terminal 3)
-Open a third terminal, enter the container, source the workspace, and start the subscriber node to process sensor data:
+## Resources
 
-
-./scripts/cmd bash
-source /opt/ws/install/setup.bash
-ros2 run lab2 lidar_subscriber
-
-
-Watch the console output. If the robot approaches an obstacle closer than 1.0 meter, a yellow [WARN] message will appear indicating an obstacle detection.
+- [ROS 2 Jazzy Documentation](https://docs.ros.org/en/jazzy/)
+- [Gazebo Harmonic Documentation](https://gazebosim.org/docs/harmonic/)
+- [SDFormat Specification](http://sdformat.org/)
+- [Docker for Robotics](https://articulatedrobotics.xyz/category/docker-for-robotics)
+- [Installation Guide](docs/INSTALLATION_GUIDE.md) - OS setup
